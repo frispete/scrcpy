@@ -6,6 +6,7 @@ import android.graphics.Rect;
 import android.media.MediaCodec;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.os.Build;
 import android.os.IBinder;
 import android.view.Surface;
 
@@ -83,9 +84,15 @@ public class ScreenEncoder implements Device.RotationListener {
         }
     }
 
+    @SuppressWarnings("deprecation") // Android API 19 requires to call deprecated methods
     private boolean encode(MediaCodec codec, FileDescriptor fd) throws IOException {
         boolean eof = false;
         MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
+
+        ByteBuffer[] outputBuffers = null;
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
+            outputBuffers = codec.getOutputBuffers();
+        }
 
         while (!consumeRotationChange() && !eof) {
             int outputBufferId = codec.dequeueOutputBuffer(bufferInfo, -1);
@@ -96,13 +103,20 @@ public class ScreenEncoder implements Device.RotationListener {
                     break;
                 }
                 if (outputBufferId >= 0) {
-                    ByteBuffer codecBuffer = codec.getOutputBuffer(outputBufferId);
+                    ByteBuffer codecBuffer;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+			codecBuffer = codec.getOutputBuffer(outputBufferId);
+                    } else {
+                        codecBuffer = outputBuffers[outputBufferId];
+                    }
 
                     if (sendFrameMeta) {
                         writeFrameMeta(fd, bufferInfo, codecBuffer.remaining());
                     }
 
                     IO.writeFully(fd, codecBuffer);
+                } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP && outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                    outputBuffers = codec.getOutputBuffers();
                 }
             } finally {
                 if (outputBufferId >= 0) {

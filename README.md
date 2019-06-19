@@ -9,7 +9,7 @@ It works on _GNU/Linux_, _Windows_ and _MacOS_.
 
 ## Requirements
 
-The Android part requires at least API 21 (Android 5.0).
+The Android part requires at least API 19 (Android 4.4).
 
 Make sure you [enabled adb debugging][enable-adb] on your device(s).
 
