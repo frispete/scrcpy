@@ -88,7 +88,6 @@ public class ScreenEncoder implements Device.RotationListener {
     private boolean encode(MediaCodec codec, FileDescriptor fd) throws IOException {
         boolean eof = false;
         MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
-
         ByteBuffer[] outputBuffers = null;
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
             outputBuffers = codec.getOutputBuffers();
@@ -105,7 +104,7 @@ public class ScreenEncoder implements Device.RotationListener {
                 if (outputBufferId >= 0) {
                     ByteBuffer codecBuffer;
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-			codecBuffer = codec.getOutputBuffer(outputBufferId);
+                        codecBuffer = codec.getOutputBuffer(outputBufferId);
                     } else {
                         codecBuffer = outputBuffers[outputBufferId];
                     }
@@ -115,7 +114,8 @@ public class ScreenEncoder implements Device.RotationListener {
                     }
 
                     IO.writeFully(fd, codecBuffer);
-                } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP && outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+                } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP &&
+                           outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                     outputBuffers = codec.getOutputBuffers();
                 }
             } finally {
